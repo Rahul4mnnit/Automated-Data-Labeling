@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Table, Tag, Button, Modal, Input, message } from "antd";
 import API from "../services/api";
 
-export default function DataTable() {
+export default function DataTable({ refreshStats }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [overrideModal, setOverrideModal] = useState(false);
@@ -31,6 +31,7 @@ export default function DataTable() {
     await API.post(`/items/${id}/accept`);
     message.success("Label accepted");
     fetchItems();
+    refreshStats(); // ✅ now works
   };
 
   // OVERRIDE
@@ -42,6 +43,7 @@ export default function DataTable() {
     setOverrideModal(false);
     setNewLabel("");
     fetchItems();
+    refreshStats(); // ✅ now works
   };
 
   const columns = [
@@ -51,7 +53,15 @@ export default function DataTable() {
       title: "Status",
       dataIndex: "status",
       render: (status) => (
-        <Tag color={status === "pending" ? "orange" : status === "accepted" ? "green" : "red"}>
+        <Tag
+          color={
+            status === "pending"
+              ? "orange"
+              : status === "accepted"
+              ? "green"
+              : "red"
+          }
+        >
           {status.toUpperCase()}
         </Tag>
       ),
