@@ -3,6 +3,7 @@ const multer = require("multer");
 const csv = require("csv-parser");
 const router = express.Router();
 
+// store uploaded file in memory
 const upload = multer({ storage: multer.memoryStorage() });
 
 router.post("/", upload.single("file"), (req, res) => {
@@ -13,16 +14,21 @@ router.post("/", upload.single("file"), (req, res) => {
   const fileName = req.file.originalname;
   const buffer = req.file.buffer;
 
-  // JSON FILE
+  // 🔹 JSON FILE
   if (fileName.endsWith(".json")) {
-    const jsonData = JSON.parse(buffer.toString());
-    return res.json({
-      message: "JSON parsed successfully",
-      records: jsonData.length || 1,
-    });
+    try {
+      const jsonData = JSON.parse(buffer.toString());
+      return res.json({
+        type: "json",
+        records: jsonData,
+        count: Array.isArray(jsonData) ? jsonData.length : 1,
+      });
+    } catch (err) {
+      return res.status(400).json({ error: "Invalid JSON file" });
+    }
   }
 
-  // CSV FILE
+  // 🔹 CSV FILE
   if (fileName.endsWith(".csv")) {
     const results = [];
     const stream = require("stream");
@@ -35,15 +41,20 @@ router.post("/", upload.single("file"), (req, res) => {
       .on("data", (data) => results.push(data))
       .on("end", () => {
         res.json({
-          message: "CSV parsed successfully",
-          records: results.length,
+          type: "csv",
+          records: results,
+          count: results.length,
         });
       });
 
     return;
   }
 
-  res.status(400).json({ error: "Unsupported file format" });
+  // 🔹 Unsupported file
+  res.status(400).json({ error: "Only CSV or JSON files are allowed" });
 });
+
+
+
 
 module.exports = router;
