@@ -2,12 +2,14 @@ import React, { useEffect, useState } from "react";
 import { Table, Tag, Button, Modal, Input, message } from "antd";
 import API from "../services/api";
 
-export default function DataTable({ refreshStats }) {
+export default function DataTable({ refreshStats, reloadFlag }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [overrideModal, setOverrideModal] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
   const [newLabel, setNewLabel] = useState("");
+  const [reviewItem, setReviewItem] = useState(null);
+
 
   const fetchItems = async () => {
     const res = await API.get("/items");
@@ -23,8 +25,8 @@ export default function DataTable({ refreshStats }) {
   };
 
   useEffect(() => {
-    fetchItems();
-  }, []);
+  fetchItems();
+}, [reloadFlag]);
 
   // ACCEPT
   const acceptLabel = async (id) => {
@@ -71,6 +73,13 @@ export default function DataTable({ refreshStats }) {
       render: (_, record) => (
         <>
           <Button
+  type="link"
+  onClick={() => setReviewItem(record)}
+>
+  Review
+</Button>
+
+          <Button
             type="link"
             disabled={record.status !== "pending"}
             onClick={() => acceptLabel(record.key)}
@@ -94,26 +103,47 @@ export default function DataTable({ refreshStats }) {
   ];
 
   return (
-    <>
-      <Table
-        columns={columns}
-        dataSource={data}
-        loading={loading}
-        pagination={{ pageSize: 5 }}
-      />
+  <>
+    <Table
+      columns={columns}
+      dataSource={data}
+      loading={loading}
+      pagination={{ pageSize: 5 }}
+    />
 
-      <Modal
-        title="Override Label"
-        open={overrideModal}
-        onOk={submitOverride}
-        onCancel={() => setOverrideModal(false)}
-      >
-        <Input
-          placeholder="Enter new label"
-          value={newLabel}
-          onChange={(e) => setNewLabel(e.target.value)}
-        />
-      </Modal>
-    </>
-  );
+    {/* 🔹 REVIEW MODAL (SEPARATE) */}
+    <Modal
+      title="Review Data Item"
+      open={!!reviewItem}
+      onCancel={() => setReviewItem(null)}
+      footer={null}
+    >
+      <p><b>Text:</b></p>
+      <p>{reviewItem?.raw}</p>
+
+      <p><b>AI Label:</b></p>
+      <Tag color="blue">{reviewItem?.label}</Tag>
+
+      <p style={{ marginTop: 10 }}>
+        <b>Status:</b> {reviewItem?.status?.toUpperCase()}
+      </p>
+    </Modal>
+
+    {/* 🔹 OVERRIDE MODAL (SEPARATE) */}
+    <Modal
+      title="Override Label"
+      open={overrideModal}
+      onOk={submitOverride}
+      onCancel={() => setOverrideModal(false)}
+    >
+      <Input
+        placeholder="Enter new label"
+        value={newLabel}
+        onChange={(e) => setNewLabel(e.target.value)}
+      />
+    </Modal>
+  </>
+);
+
+
 }

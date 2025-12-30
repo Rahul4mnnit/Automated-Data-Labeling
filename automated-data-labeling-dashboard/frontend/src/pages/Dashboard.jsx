@@ -16,9 +16,16 @@ export default function Dashboard() {
     overridden: 0,
   });
 
+  const [reloadFlag, setReloadFlag] = useState(false);
+
   const fetchStats = async () => {
     const res = await API.get("/stats");
     setStats(res.data);
+  };
+
+  const triggerReload = () => {
+    setReloadFlag((prev) => !prev);
+    fetchStats(); // refresh stats also
   };
 
   useEffect(() => {
@@ -34,9 +41,16 @@ export default function Dashboard() {
       </Header>
 
       <Content style={{ padding: 24 }}>
-        <UploadDataset />
+        {/* 🔥 notify dashboard when upload succeeds */}
+        <UploadDataset onUploadSuccess={triggerReload} />
+
         <StatsBar stats={stats} />
-        <DataTable refreshStats={fetchStats} />
+
+        {/* 🔥 reloadFlag forces re-fetch */}
+        <DataTable
+          refreshStats={fetchStats}
+          reloadFlag={reloadFlag}
+        />
       </Content>
     </Layout>
   );
