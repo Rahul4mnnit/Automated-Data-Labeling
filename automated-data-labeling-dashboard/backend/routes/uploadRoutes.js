@@ -5,6 +5,8 @@ const DataItem = require("../models/DataItem");
 const router = express.Router();
 const stream = require("stream");
 
+const autoLabel = require("../services/openaiService");
+
 const upload = multer({ storage: multer.memoryStorage() });
 
 router.post("/", upload.single("file"), async (req, res) => {
@@ -26,17 +28,30 @@ router.post("/", upload.single("file"), async (req, res) => {
       .pipe(csv())
       .on("data", (data) => results.push(data))
       .on("end", async () => {
-        const docs = results.map((row) => ({
-          rawData: row,
-          status: "pending",
-        }));
+        try {
+          const docs = [];
 
-        await DataItem.insertMany(docs);
+          for (const row of results) {
+            const text = row.text || JSON.stringify(row);
+            const label = await autoLabel(text);
 
-        return res.json({
-          message: "CSV parsed & saved successfully",
-          count: docs.length,
-        });
+            docs.push({
+              rawData: row,
+              aiLabel: label,
+              status: "pending",
+            });
+          }
+
+          await DataItem.insertMany(docs);
+
+          return res.json({
+            message: "CSV parsed, auto-labeled & saved successfully",
+            count: docs.length,
+          });
+        } catch (err) {
+          console.error(err);
+          return res.status(500).json({ error: "CSV auto-labeling failed" });
+        }
       });
 
     return;
@@ -46,24 +61,32 @@ router.post("/", upload.single("file"), async (req, res) => {
   if (fileName.endsWith(".json")) {
     try {
       const jsonData = JSON.parse(buffer.toString());
-
-      // ensure array
       const records = Array.isArray(jsonData) ? jsonData : [jsonData];
 
-      const docs = records.map((item) => ({
-        rawData: item,
-        status: "pending",
-      }));
+      const docs = [];
+
+      for (const item of records) {
+        const text = item.text || JSON.stringify(item);
+        const label = await autoLabel(text);
+
+        docs.push({
+          rawData: item,
+          aiLabel: label,
+          status: "pending",
+        });
+      }
 
       await DataItem.insertMany(docs);
 
       return res.json({
-        message: "JSON parsed & saved successfully",
+        message: "JSON parsed, auto-labeled & saved successfully",
         count: docs.length,
       });
     } catch (err) {
-      return res.status(400).json({ error: "Invalid JSON file" });
-    }
+  console.error(err.response?.data || err.message);
+  
+}
+
   }
 
   // ================= INVALID =================
