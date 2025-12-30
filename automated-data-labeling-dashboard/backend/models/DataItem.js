@@ -6,8 +6,11 @@ const DataItemSchema = new mongoose.Schema({
   finalLabel: String,
   status: {
     type: String,
-    enum: ["pending", "accepted", "overridden"],
     default: "pending",
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
   },
 });
 
