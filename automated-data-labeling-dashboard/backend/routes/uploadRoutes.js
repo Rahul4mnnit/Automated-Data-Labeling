@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
 
-router.post("/", (req, res) => {
-  res.json({ message: "Upload endpoint working" });
+router.get("/test", (req, res) => {
+  res.json({ message: "Frontend and backend connected 🎉" });
 });
 
 module.exports = router;
