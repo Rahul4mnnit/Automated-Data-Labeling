@@ -171,7 +171,7 @@ http://localhost:5000
 ![Dashboard Light](images/lightmode.png)
 
 ### Dashboard (Dark Mode)
-![Dashboard Dark](images/darkmode.png)
+![Dashboard Dark](frontend/images/darkmode.png)
 
 ### Filters & Search
 ![Filters](images/list.png)
