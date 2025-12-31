@@ -1,5 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { Layout, Typography } from "antd";
+import {
+  Layout,
+  Typography,
+  message,
+  Switch,
+  Space,
+  ConfigProvider,
+  theme,
+} from "antd";
+import { BulbOutlined, MoonOutlined } from "@ant-design/icons";
 import UploadDataset from "../components/UploadDataset";
 import StatsBar from "../components/StatsBar";
 import DataTable from "../components/DataTable";
@@ -17,15 +26,20 @@ export default function Dashboard() {
   });
 
   const [reloadFlag, setReloadFlag] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
 
   const fetchStats = async () => {
-    const res = await API.get("/stats");
-    setStats(res.data);
+    try {
+      const res = await API.get("/stats");
+      setStats(res.data);
+    } catch (err) {
+      message.error("Failed to load statistics");
+    }
   };
 
   const triggerReload = () => {
     setReloadFlag((prev) => !prev);
-    fetchStats(); // refresh stats also
+    fetchStats();
   };
 
   useEffect(() => {
@@ -33,25 +47,50 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <Layout style={{ minHeight: "100vh" }}>
-      <Header style={{ background: "#001529" }}>
-        <Title level={3} style={{ color: "white", margin: 0 }}>
-          Automated Data Labeling Dashboard
-        </Title>
-      </Header>
+    <ConfigProvider
+      theme={{
+        algorithm: darkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
+      }}
+    >
+      <Layout style={{ minHeight: "100vh" }}>
+        {/* 🔹 STICKY HEADER */}
+        <Header
+          style={{
+            position: "sticky",
+            top: 0,
+            zIndex: 1000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "0 24px",
+          }}
+        >
+          <Title level={3} style={{ margin: 0, color: "white" }}>
+            Automated Data Labeling Dashboard
+          </Title>
 
-      <Content style={{ padding: 24 }}>
-        {/* 🔥 notify dashboard when upload succeeds */}
-        <UploadDataset onUploadSuccess={triggerReload} />
+          {/* 🌙 DARK MODE TOGGLE */}
+          <Space>
+            <BulbOutlined style={{ color: "#fff", fontSize: 18 }} />
 
-        <StatsBar stats={stats} />
+            <Switch
+              checked={darkMode}
+              onChange={setDarkMode}
+              checkedChildren={<MoonOutlined style={{ color: "#fff" }} />}
+              unCheckedChildren={<BulbOutlined style={{ color: "#fff" }} />}
+            />
 
-        {/* 🔥 reloadFlag forces re-fetch */}
-        <DataTable
-          refreshStats={fetchStats}
-          reloadFlag={reloadFlag}
-        />
-      </Content>
-    </Layout>
+            <MoonOutlined style={{ color: "#fff", fontSize: 18 }} />
+          </Space>
+        </Header>
+
+        {/* 🔹 CONTENT */}
+        <Content style={{ padding: 24 }}>
+          <UploadDataset onUploadSuccess={triggerReload} />
+          <StatsBar stats={stats} />
+          <DataTable refreshStats={fetchStats} reloadFlag={reloadFlag} />
+        </Content>
+      </Layout>
+    </ConfigProvider>
   );
 }

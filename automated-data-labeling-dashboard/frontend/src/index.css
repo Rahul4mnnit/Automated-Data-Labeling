@@ -2,3 +2,8 @@ body {
   margin: 0;
   background-color: #f5f7fa;
 }
+
+.interactive-row:hover {
+  background-color: #f5f7fa;
+  transition: background-color 0.2s ease;
+}
