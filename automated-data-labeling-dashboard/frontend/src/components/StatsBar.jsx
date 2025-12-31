@@ -2,6 +2,7 @@ import React from "react";
 import { Card, Row, Col, Statistic } from "antd";
 
 export default function StatsBar({ stats }) {
+  //  const { total = 0, pending = 0, accepted = 0, overridden = 0 } = stats;
   return (
     <Card style={{ marginBottom: 20 }}>
       <Row gutter={16}>
