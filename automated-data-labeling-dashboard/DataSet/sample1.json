@@ -1,0 +1,21 @@
+[
+  { "text": "Great service and very friendly staff" },
+  { "text": "The product quality is excellent" },
+  { "text": "I am very satisfied with my purchase" },
+
+  { "text": "Customer support was very slow" },
+  { "text": "Worst experience ever" },
+  { "text": "The app crashes frequently" },
+
+  { "text": "It is okay, nothing special" },
+  { "text": "Average experience overall" },
+  { "text": "The product works as expected" },
+
+  { "text": "Amazing user interface and smooth performance" },
+  { "text": "Refund process was complicated and frustrating" },
+  { "text": "Delivery was on time" },
+
+  { "text": "I love this application" },
+  { "text": "The website is confusing to navigate" },
+  { "text": "Not bad, but could be better" }
+]
