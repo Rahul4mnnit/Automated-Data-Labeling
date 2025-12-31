@@ -8,10 +8,15 @@ import {
   message,
   Checkbox,
   Space,
+  Row,
+  Col,
 } from "antd";
 import API from "../services/api";
 
-export default function DataTable({ refreshStats, reloadFlag }) {
+export default function DataTable({
+  refreshStats = () => {},
+  reloadFlag = false,
+}) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -20,6 +25,9 @@ export default function DataTable({ refreshStats, reloadFlag }) {
   const [newLabel, setNewLabel] = useState("");
 
   const [reviewItem, setReviewItem] = useState(null);
+  const [actionLoading, setActionLoading] = useState(null);
+
+  const [searchText, setSearchText] = useState("");
 
   const [selectedStatuses, setSelectedStatuses] = useState([
     "pending",
@@ -28,16 +36,21 @@ export default function DataTable({ refreshStats, reloadFlag }) {
   ]);
 
   const fetchItems = async () => {
-    const res = await API.get("/items");
-    setData(
-      res.data.map((item) => ({
-        key: item._id,
-        raw: item.rawData.text || JSON.stringify(item.rawData),
-        label: item.aiLabel || item.rawData.label || "-",
-        status: item.status,
-      }))
-    );
-    setLoading(false);
+    try {
+      const res = await API.get("/items");
+      setData(
+        res.data.map((item) => ({
+          key: item._id,
+          raw: item.rawData.text || JSON.stringify(item.rawData),
+          label: item.aiLabel || item.rawData.label || "-",
+          status: item.status,
+        }))
+      );
+    } catch (err) {
+      message.error("Failed to load data");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -94,8 +107,13 @@ export default function DataTable({ refreshStats, reloadFlag }) {
 
           <Button
             type="link"
+            loading={actionLoading === record.key}
             disabled={record.status !== "pending"}
-            onClick={() => acceptLabel(record.key)}
+            onClick={async () => {
+              setActionLoading(record.key);
+              await acceptLabel(record.key);
+              setActionLoading(null);
+            }}
           >
             Accept
           </Button>
@@ -116,31 +134,63 @@ export default function DataTable({ refreshStats, reloadFlag }) {
     },
   ];
 
-  // 🔹 Apply status filter
-  const filteredData = data.filter((item) =>
-    selectedStatuses.includes(item.status)
-  );
+  // 🔹 FILTER + SEARCH LOGIC
+  const filteredData = data.filter((item) => {
+    const matchesStatus =
+      selectedStatuses.length === 0 || selectedStatuses.includes(item.status);
+
+    const matchesSearch =
+      searchText.trim() === "" ||
+      item.raw.toLowerCase().includes(searchText.toLowerCase());
+
+    return matchesStatus && matchesSearch;
+  });
 
   return (
     <>
-      {/* 🔹 STATUS FILTER */}
-      <Space style={{ marginBottom: 16 }}>
-        <Checkbox.Group
-          options={[
-            { label: "Pending", value: "pending" },
-            { label: "Accepted", value: "accepted" },
-            { label: "Overridden", value: "overridden" },
-          ]}
-          value={selectedStatuses}
-          onChange={setSelectedStatuses}
-        />
-      </Space>
+      {/* 🔹 SEARCH (LEFT) + FILTERS (RIGHT) */}
+      <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
+        <Col>
+          <Input.Search
+            placeholder="Search dataset..."
+            allowClear
+            style={{ width: 300 }}
+            onChange={(e) => setSearchText(e.target.value)}
+          />
+        </Col>
 
+        <Col>
+          <Checkbox.Group
+            options={[
+              { label: <Tag color="orange">Pending</Tag>, value: "pending" },
+              { label: <Tag color="green">Accepted</Tag>, value: "accepted" },
+              { label: <Tag color="red">Overridden</Tag>, value: "overridden" },
+            ]}
+            value={selectedStatuses}
+            onChange={setSelectedStatuses}
+          />
+        </Col>
+      </Row>
+
+     
+
+      {/* 🔹 TABLE */}
       <Table
         columns={columns}
         dataSource={filteredData}
         loading={loading}
+        rowClassName={() => "interactive-row"}
         pagination={{ pageSize: 5 }}
+        locale={{
+          emptyText: (
+            <div style={{ padding: 40, textAlign: "center" }}>
+              <p style={{ fontSize: 16 }}>📂 No data uploaded yet</p>
+              <p style={{ color: "#888" }}>
+                Upload a CSV or JSON file to start labeling
+              </p>
+            </div>
+          ),
+        }}
       />
 
       {/* 🔹 REVIEW MODAL */}
