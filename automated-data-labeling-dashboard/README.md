@@ -168,13 +168,13 @@ http://localhost:5000
 
 
 ### Dashboard (Light Mode)
-![Dashboard Light](images/lightmode.png)
+![Dashboard Light](frontend/images/lightmode.png)
 
 ### Dashboard (Dark Mode)
-![Dashboard Dark](images/darkmode.png)
+![Dashboard Dark](frontend/images/darkmode.png)
 
 ### Filters & Search
-![Filters](images/list.png)
+![Filters](frontend/images/list.png)
 
 ## 🧠 Design Decisions
 
